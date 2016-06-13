@@ -1,0 +1,222 @@
+<?php
+function new_db_menu() {
+  $items['dbform/view'] = array(
+		'title' => 'Enter information',
+		'page callback' => 'drupal_get_form',
+		'access callback' => true,
+		'type' => MENU_NORMAL_ITEM,
+    'page arguments' => array('new_info_form')
+		);
+  $items['display'] = array(
+    'title' => 'display information',
+    'page callback' => 'new_view_data',
+    'access callback' => true,
+    'type' => MENU_NORMAL_ITEM,
+    );
+    $items['delete/%'] = array(
+    'page callback' => 'delete_data',
+    'access callback' => true,
+    'type' => MENU_NORMAL_ITEM,
+    );
+    $items['node_create'] = array(
+      'page callback' => 'custom_node',
+    'access callback' => true,
+    'type' => MENU_NORMAL_ITEM,
+    );
+   
+	return $items;
+}
+
+function new_info_form($form, &$form_state){
+  $form['add'] = array(
+   	'#type' => 'fieldset',
+   	// '#size' => 20,
+   	'#title' => t('Basic information'),
+   	 '#collapsible' => TRUE,
+    '#collapsed' => TRUE
+    );
+  $form['add']['n_id'] = array(
+    '#type' => 'hidden',
+    '#size' => 4,
+    );
+  $form['add']['name'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 20,
+  	'#attributes' => array('placeholder' => 'write your name')
+  	);
+  $form['add']['surname'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 20,
+  	'#attributes' => array('placeholder' => 'write your surname')
+  	);
+  $form['add']['age'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 4,
+  	'#title' => 'Age'
+  	);
+  $form['add']['number'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 20,
+  	'#attributes' => array('placeholder' => 'write your contect number'),
+  	);
+  $form['add']['submit'] = array(
+  	'#type' => 'submit',
+  	'#value' => 'send',
+  	);
+  return $form;
+ 
+  
+}
+
+function new_info_form_submit($form,&$form_state){
+	global $user;
+   $node = new stdclass();
+  // content type
+  $node ->type = 'example';
+  // Or e.g. 'en' if locale is enabled
+  $node->language = 'und';
+  // Set some default values  
+  node_object_prepare($node);  
+  $node->title = t('your title');
+  $node->field_user_id['und'][0]['value'] = 25;
+  $node->field_name['und'][0]['value'] = $form_state['values']['name'];
+  $node->field_surname['und'][0]['value'] = $form_state['values']['surname'];
+  $node->field_age['und'][0]['value'] =  $form_state['values']['age'];
+  $node->field_number['und'][0]['value'] = $form_state['values']['number'];
+  $node->status = 1;   // (1 or 0): published or unpublished
+  $node->promote = 0;  // (1 or 0): promoted to front page or not
+  $node->sticky = 0;  // (1 or 0): sticky at top of lists or not
+  $node->comment = 1;  // 2 = comments open, 1 = comments closed, 0 = comments hidden
+  // Add author of the node
+  $node->uid = 1;
+  // Set created date
+  $node->date = 'complaint_post_date';
+  $node->created = strtotime('complaint_post_date');
+  $path = 'content/example' . date('YmdHis');
+
+  $node->path = array('alias' => $path);
+  // Save the node
+node_save($node);
+ $test = $node->nid;
+    $entry = array(
+    'n_id'     =>  $test,
+    'name'    => $form_state['values']['name'],
+    'surname' => $form_state['values']['surname'],
+    'age'     => $form_state['values']['age'],
+    'number'  =>  $form_state['values']['number'],
+    );
+  $return = new_db_insert($entry);
+  if ($return) {
+    drupal_set_message(t("Created entry @entry", array('@entry' => print_r($entry, TRUE))));
+     drupal_goto('display');
+  }
+return $test;
+}
+function new_db_insert($entry) {
+  $return_value = NULL;
+  try {
+    $return_value = db_insert('table_1')
+                    ->fields($entry)
+                    ->execute();
+  }
+  catch (Exception $e) {
+    drupal_set_message(t('db_insert failed. Message = %message, query= %query',
+      array('%message' => $e->getMessage(), '%query' => $e->query_string)), 'error');
+  }
+  return $return_value;
+}
+
+
+function new_view_data(){
+  $query = db_select('table_1','tb');
+	$query
+	     ->fields('tb',array('u_id','name','surname','age','number'))
+	     ->range(0,200)
+	     ->orderBy('tb.u_id');
+	     $results = $query->execute();
+	  $header = array(t('uid'),t('name'),t('surname'),t('age'),t('number'),t('delete'));
+                     
+	     $rows = array();
+	     foreach ($results as $result) {
+                 $rows[] = array(
+                 $result->u_id,
+                 $result->name,
+                 $result->surname,
+                 $result->age,
+                 $result->number,
+                 $link = l(t('delete'),'delete/'.$result->u_id),
+                  );
+          }
+ $table = theme('table', array('header' => $header, 'rows' => $rows));
+
+return $table;
+}
+ function delete_data(){ 
+  $arg = arg('1');
+  $tt = ''; 
+  $select = db_select('table_1','t1')
+             ->fields('t1',array(t('n_id')))
+             ->condition('u_id',$arg)
+             ->execute()
+             ->fetchAll();
+       $tt = $select[0]->n_id;  
+      $del = node_delete($tt);
+       $delete = db_delete('table_1')
+                         ->condition('u_id',arg('1'))
+                         ->execute();           
+    drupal_set_message(t('record deleted Id '.arg('1')));
+    drupal_goto('display');
+}
+
+
+// create custom module
+// impliment hook_block_info()
+
+function new_db_block_info(){
+     $blocks['simple_block'] = array (
+    'info' => t('simple block'),
+    'cache' => DRUPAL_NO_CACHE
+  );
+  return $blocks;
+}
+function new_db_block_view($delta) {
+  $block = array();
+ switch ($delta) {
+    case 'simple_block' :
+      $block['subject'] = 'Test 2 Block';
+      $block['content'] = simple_content();
+    break;
+   
+  }
+  return $block;
+}
+//  Fatching and display data in the form of table.
+function simple_content(){
+  $values_1 = db_select('table_1','tb')
+          ->fields('tb',array('name'))
+          ->range(0,5)
+          ->execute()
+          ->fetchAll();
+$rows_1 = array();
+$output = '';
+foreach ($values_1 as $key => $value) {
+  
+$output .= '<div><a href = "display">'.$value->name.'</a></div>';
+
+
+}
+
+return $output;
+
+}
+function new_db_node_delete($node){
+   db_delete('table_1')
+   ->condition('n_id',$node->nid)
+   ->execute();
+}
+
+
+
+
+
+

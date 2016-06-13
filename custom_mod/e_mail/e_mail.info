@@ -1,0 +1,6 @@
+name = "e_mail"
+description = "this module only use for  send mails."
+core = 7.x
+package = custom modules
+files[] = e_mail.module
+script[] = e_mail.js

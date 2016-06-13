@@ -1,0 +1,5 @@
+name = Database New forms
+description = Basic drupal form with database connectivity.
+core = 7.x
+package = custom modules
+files[] = new_db.module

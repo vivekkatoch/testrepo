@@ -1,0 +1,5 @@
+name = Custom node insert
+description = simple node insert module
+files[] = table_node_insert.module
+package = custom modules
+core = 7.x

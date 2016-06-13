@@ -1,0 +1,51 @@
+<?php
+// Implements hook_menu
+
+function example_ajax_menu() {
+ $items =array();
+
+ // Add a menu item for enter data.
+ $items['ajax/example'] = array(
+  	'title' => 'ajax',
+  	'description' => 'demo module with auto complete feature.',
+  	'page callback' => 'drupal_get_form',
+    'access callback' => true,
+  	'page arguments' => array('drupal_user'),
+  	);
+
+ // Add a menu item for our Query.
+  $items['querys'] = array(
+    'page callback' => 'all_user_names',
+    'access callback' => true, 
+    );
+  return $items;
+}
+
+// Create a drupal form with a single Textfield.
+function drupal_user() {
+
+// Add css file and js file in form.
+ drupal_add_css(drupal_get_path('module', 'example_ajax') . '/css/view.css');
+drupal_add_js(drupal_get_path('module', 'example_ajax') . '/js/effect.js');
+  $form['user_name'] = array(
+  	'#title' => 'user name',
+    '#markup' => '<input type = "text" id = "field"  >'.'<div class = "auto_com"></div>',
+  );
+return $form;
+}
+
+// Fetch all user names .
+function all_user_names(){
+
+// Fetch current value of the textfield.   
+$text = $_REQUEST['id'];
+// Fetch user names of all users  in site.
+$query = db_select('users','usr')
+                ->fields('usr',array('name'))
+                ->condition('name', '%' . db_like($text) . '%', 'LIKE')
+                ->execute()
+                ->fetchAll();
+
+// Returns the JSON representation of a value.                
+echo json_encode($query);
+}

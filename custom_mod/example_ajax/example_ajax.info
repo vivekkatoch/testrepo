@@ -1,0 +1,6 @@
+name = Example Ajax 
+description = Simple ajax example in drupal 7.
+core = 7.x
+package = custom modules
+files[] = ajax_example.module
+

@@ -1,0 +1,13 @@
+.auto_com {
+    background-color: rgba(0, 204, 255, .6);
+    border-radius: 4px;
+    box-shadow: 1px 1px 4px 1px;
+    display: none;
+    width: 63%;
+}
+#link {
+	border-bottom: 1px solid white;
+}
+#name_link {
+   color: white;
+}

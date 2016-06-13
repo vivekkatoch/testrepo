@@ -1,0 +1,137 @@
+<?php
+function db_form_menu() {
+	$items['dbform/create'] = array(
+		'title' => 'Basic information',
+		'page callback' => 'drupal_get_form',
+		'access callback' => true,
+        'type' => MENU_NORMAL_ITEM,
+        'page arguments' => array('view_data123'),
+		);
+	$items['dbform/view'] = array(
+		'title' => 'View information',
+		'page callback' => 'view_data123',
+		'access callback' => true,
+		'type' => MENU_NORMAL_ITEM,
+		);
+    
+    
+	return $items;
+}
+function info_form($form, &$form_state){
+  $form['add'] = array(
+   	'#type' => 'fieldset',
+   	// '#size' => 20,
+   	'#title' => t('Basic information'),
+   	 '#collapsible' => TRUE,
+    '#collapsed' => TRUE
+    );
+  $form['add']['name'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 20,
+  	'#attributes' => array('placeholder' => 'write your name')
+  	);
+  $form['add']['surname'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 20,
+  	'#attributes' => array('placeholder' => 'write your surname')
+  	);
+  $form['add']['age'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 4,
+  	'#title' => 'Age'
+  	);
+  $form['add']['number'] = array(
+  	'#type' => 'textfield',
+  	'#size' => 20,
+  	'#attributes' => array('placeholder' => 'write your contect number'),
+  	);
+  $form['add']['submit'] = array(
+  	'#type' => 'submit',
+  	'#value' => 'send',
+  	);
+  return $form;
+}
+
+function info_form_submit($form,&$form_state){
+	global $user;
+
+	 $entry = array(
+	 'u_id'     => $user->u_id,
+    'name'    => $form_state['values']['name'],
+    'surname' => $form_state['values']['surname'],
+    'age'     => $form_state['values']['age'],
+    'number'  =>  $form_state['values']['number'],
+    );
+  function db_form_insert($entry) {
+    $return_value = NULL;
+  try {
+    $return_value = db_insert('table_1')
+                    ->fields($entry)
+                    ->execute();
+  }
+  catch (Exception $e) {
+    drupal_set_message(t('db_insert failed. Message = %message, query= %query',
+      array('%message' => $e->getMessage(), '%query' => $e->query_string)), 'error');
+  }
+  return $return_value;
+}
+  $return = db_form_insert($entry);
+  if ($return) {
+    drupal_set_message(t("Created entry @entry", array('@entry' => print_r($entry, TRUE))));
+     drupal_goto('dbform/view');
+  }
+
+}
+function view_data(){
+
+	$query = db_select('table_1','tb');
+	$query
+	     ->fields('tb',array('u_id','name','surname','age','number'))
+	     ->range(0,20)
+	     ->orderBy('tb.u_id');
+	     $results = $query->execute();
+	     $header = array(t('uid'),t('name'),t('surname'),t('age'),t('number'),t('delete'));
+ 
+	     $rows = array();
+	     foreach ($results as $result) {
+                 $rows[] = array(
+                   $result->u_id,
+                   $result->name,
+                   $result->surname,
+                   $result->age,
+                   $result->number,
+                   $result->age,	
+	     	          );
+      }
+// $table .= 
+
+//return theme('table', array('header' => $header, 'rows' => $rows));
+
+return t('test');
+}
+
+
+
+
+function view_data123(){
+
+
+return t('test');
+
+}
+
+
+// function db_form_menu() {
+//   $items['hello'] = array(
+//     'title' => 'Hello world!',
+//     'page callback' => 'helloworld_page',
+//     'access callback' => TRUE,
+//   );
+
+//   return $items;
+// }
+
+// function helloworld_page(){
+
+//   return 'test';
+// }

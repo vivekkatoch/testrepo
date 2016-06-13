@@ -1,0 +1,133 @@
+<?php 
+
+// Implement hook_menu().
+function table_node_insert_menu() {
+
+ //Add a menu item for insert data in table.
+ $items['table_data_insert'] = array(
+		'title' => 'Enter node data',
+		'page callback' => 'drupal_get_form',
+		'access callback' => true,
+		'type' => MENU_NORMAL_ITEM,
+    'page arguments' => array('table_node_insert')
+		);
+  return $items;
+  }
+
+  //Create a custom form and add fields inside the form.
+  function table_node_insert($form,&$form_state) {
+    $form['add'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('content'),
+     '#collapsible' => TRUE,
+    '#collapsed' => TRUE
+    );
+  $form['add']['n_id'] = array(
+    '#type' => 'hidden',
+    '#size' => 4,
+    );
+  $form['add']['con_name'] = array(
+    '#type' => 'textfield',
+    '#size' => 20,
+    '#attributes' => array('placeholder' => 'write your name')
+    );
+  $form['add']['con_surname'] = array(
+    '#type' => 'textfield',
+    '#size' => 20,
+    '#attributes' => array('placeholder' => 'write your surname')
+    );
+  $form['add']['con_age'] = array(
+    '#type' => 'textfield',
+    '#size' => 4,
+    '#title' => 'Age'
+    );
+  $form['add']['con_number'] = array(
+    '#type' => 'textfield',
+    '#size' => 20,
+    '#attributes' => array('placeholder' => 'write your contect number'),
+    );
+  $form['add']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'insert',
+    );
+  return $form;
+ }
+
+ //Implement hook_submit().
+ function table_node_insert_submit($form,&$form_state){
+  // content type
+  $node ->type = 'example';
+  // Or e.g. 'en' if locale is enabled
+  $node->language = 'und';
+  // Set some default values  
+  node_object_prepare($node);  
+  $node->title = t('your title');
+  $node->field_user_id['und'][0]['value'] = 25;
+  $node->field_name['und'][0]['value'] = $form_state['values']['con_name'];
+  $node->field_surname['und'][0]['value'] = $form_state['values']['con_surname'];
+  $node->field_age['und'][0]['value'] =  $form_state['values']['con_age'];
+  $node->field_number['und'][0]['value'] = $form_state['values']['con_number'];
+  $node->status = 1;   // (1 or 0): published or unpublished
+  $node->promote = 0;  // (1 or 0): promoted to front page or not
+  $node->sticky = 0;  // (1 or 0): sticky at top of lists or not
+  $node->comment = 1;  // 2 = comments open, 1 = comments closed, 0 = comments hidden
+  // Add author of the node
+  $node->uid = 1;
+  // Set created date
+  $node->date = 'complaint_post_date';
+  $node->created = strtotime('complaint_post_date');
+  $path = 'content/example' . date('YmdHis');
+
+  $node->path = array('alias' => $path);
+  // Save the node
+  node_save($node);
+  $test = $node->nid;
+  $data = '';
+  $data = array(
+    'n_id'     =>  $test,
+    'name'    => $form_state['values']['con_name'],
+    'surname' => $form_state['values']['con_surname'],
+    'age'     => $form_state['values']['con_age'],
+    'number'  =>  $form_state['values']['con_number'],
+    );
+  $return_value = NULL;
+    try {
+      $return_value = db_insert('table_1')
+                      ->fields($data)
+                      ->execute();
+      drupal_set_message('node  id -> ' .$test. ' generated');
+    }
+    catch (Exception $e) {
+      drupal_set_message(t('db_insert failed. Message = %message, query= %query',
+      array('%message' => $e->getMessage(), '%query' => $e->query_string)), 'error');
+    }
+  drupal_goto('display');
+}
+
+//Implement hook_node_insert().
+function table_node_insert_node_insert($node){
+  // Check if content type == 'your  custom content type'
+  if ($node->type == 'example') {
+    $value1 = array(
+      'user_id' => $node->field_user_id['und'][0]['value'],
+      'n_id' => $node->nid,
+      'name' => $node->field_name['und'][0]['value'],
+      'surname' => $node->field_surname['und'][0]['value'],
+      'age' => $node->field_age['und'][0]['value'],
+      'number' => $node->field_number['und'][0]['value'],
+      );
+   }
+
+// Call functon for insert values into database.
+custom_form_data_insert($value1);
+  
+    }
+
+// This function is use to insert your data into your table.
+function custom_form_data_insert($value1){
+  db_insert('table_1')
+      ->fields($value1)
+      ->execute();
+}  
+
+  

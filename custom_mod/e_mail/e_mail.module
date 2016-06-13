@@ -1,5 +1,5 @@
 <?php
-//immplimennt hook_mail
+//impliment hook_mail
 
 function e_mail_mail($key,&$message,$params) {
   global $user;
